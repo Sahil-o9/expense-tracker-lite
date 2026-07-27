@@ -98,15 +98,15 @@ export default function Dashboard() {
   const [formData, setFormData] = useState({ title: '', amount: '', category: 'Food' });
 
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
 
-  const currentUser = useMemo(() => {
+  // Active User State
+  const [currentUser, setCurrentUser] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('user') || '{}');
     } catch {
       return { name: 'User', email: 'user@example.com' };
     }
-  }, []);
+  });
 
   const [savedAccounts, setSavedAccounts] = useState(() => {
     try {
@@ -121,28 +121,65 @@ export default function Dashboard() {
     []
   );
 
+  const showToast = useCallback((message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  // Fetch Expenses dynamically based on active token
+  const fetchExpenses = useCallback(async (activeToken) => {
+    const tokenToUse = activeToken || localStorage.getItem('token');
+    if (!tokenToUse) return;
+    
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/expenses`, {
+        headers: { Authorization: `Bearer ${tokenToUse}` },
+      });
+      setExpenses(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login');
+      } else {
+        showToast('Failed to load expenses', 'error');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [navigate, showToast]);
+
   useEffect(() => {
-    if (token && currentUser?.email) {
+    const currentToken = localStorage.getItem('token');
+    if (!currentToken) {
+      navigate('/login');
+      return;
+    }
+
+    if (currentUser?.email) {
       setSavedAccounts((prev) => {
         const exists = prev.some((acc) => acc.email === currentUser.email);
         let updated;
         if (exists) {
           updated = prev.map((acc) =>
             acc.email === currentUser.email
-              ? { ...acc, name: currentUser.name || 'User', token }
+              ? { ...acc, name: currentUser.name || 'User', token: currentToken }
               : acc
           );
         } else {
           updated = [
             ...prev,
-            { name: currentUser.name || 'User', email: currentUser.email, token },
+            { name: currentUser.name || 'User', email: currentUser.email, token: currentToken },
           ];
         }
         localStorage.setItem('saved_accounts', JSON.stringify(updated));
         return updated;
       });
     }
-  }, [token, currentUser]);
+
+    fetchExpenses(currentToken);
+  }, [currentUser, navigate, fetchExpenses]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -167,43 +204,10 @@ export default function Dashboard() {
     }
   }, [darkMode]);
 
-  const showToast = useCallback((message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  }, []);
-
-  const fetchExpenses = useCallback(async () => {
-    if (!token) return;
-    setLoading(true);
-    try {
-      const res = await axios.get(`${API_BASE_URL}/api/expenses`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setExpenses(Array.isArray(res.data) ? res.data : []);
-    } catch (err) {
-      if (err.response?.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        navigate('/login');
-      } else {
-        showToast('Failed to load expenses', 'error');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [token, navigate, showToast]);
-
-  useEffect(() => {
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-    fetchExpenses();
-  }, [token, navigate, fetchExpenses]);
-
   const handleAddExpense = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.amount) return;
+    const token = localStorage.getItem('token');
+    if (!formData.title || !formData.amount || !token) return;
     setSubmitting(true);
 
     try {
@@ -219,7 +223,7 @@ export default function Dashboard() {
       );
       setFormData({ title: '', amount: '', category: 'Food' });
       showToast('Expense added successfully!');
-      fetchExpenses();
+      fetchExpenses(token);
     } catch (err) {
       console.error('Add expense error:', err.response?.data || err.message);
       showToast(err.response?.data?.message || 'Error adding expense', 'error');
@@ -229,67 +233,70 @@ export default function Dashboard() {
   };
 
   const handleDelete = useCallback(async () => {
-    if (!deleteId) return;
+    const token = localStorage.getItem('token');
+    if (!deleteId || !token) return;
     try {
       await axios.delete(`${API_BASE_URL}/api/expenses/${deleteId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       showToast('Expense deleted');
       setDeleteId(null);
-      fetchExpenses();
+      fetchExpenses(token);
     } catch (err) {
       showToast('Failed to delete expense', 'error');
     }
-  }, [deleteId, token, showToast, fetchExpenses]);
+  }, [deleteId, showToast, fetchExpenses]);
 
   const handleSetDeleteId = useCallback((id) => {
     setDeleteId(id);
   }, []);
 
   // Updated Account Switch Handler
-const handleSwitchAccount = (acc) => {
-  // Update localStorage with selected account details
-  localStorage.setItem('token', acc.token);
-  localStorage.setItem('user', JSON.stringify({ name: acc.name, email: acc.email }));
-  
-  setIsSettingsOpen(false);
-  showToast(`Switched to ${acc.name}`);
+  const handleSwitchAccount = useCallback((acc) => {
+    if (!acc || !acc.token) return;
 
-  // Fetch expenses again for the newly selected account token
-  fetchExpenses();
-};
+    // Update LocalStorage
+    localStorage.setItem('token', acc.token);
+    localStorage.setItem('user', JSON.stringify({ name: acc.name, email: acc.email }));
 
-// Updated Add Account Handler
-const handleAddAccount = () => {
-  setIsSettingsOpen(false);
-  // Clear active session token but keep saved_accounts intact
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  navigate('/login');
-};
+    // Update React State
+    setCurrentUser({ name: acc.name, email: acc.email });
+    setIsSettingsOpen(false);
 
-// Updated Logout Handler
-const handleLogout = () => {
-  setIsSettingsOpen(false);
-  
-  // Remove active user from saved_accounts
-  const updatedAccounts = savedAccounts.filter((acc) => acc.email !== currentUser?.email);
-  localStorage.setItem('saved_accounts', JSON.stringify(updatedAccounts));
-  
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  
-  // If there are other saved accounts left, switch to the first one automatically
-  if (updatedAccounts.length > 0) {
-    const nextAcc = updatedAccounts[0];
-    localStorage.setItem('token', nextAcc.token);
-    localStorage.setItem('user', JSON.stringify({ name: nextAcc.name, email: nextAcc.email }));
-    showToast(`Switched to ${nextAcc.name}`);
-    fetchExpenses();
-  } else {
+    showToast(`Switched to ${acc.name}`);
+    fetchExpenses(acc.token);
+  }, [showToast, fetchExpenses]);
+
+  // Updated Add Account Handler
+  const handleAddAccount = () => {
+    setIsSettingsOpen(false);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     navigate('/login');
-  }
-};
+  };
+
+  // Updated Logout Handler
+  const handleLogout = () => {
+    setIsSettingsOpen(false);
+
+    const updatedAccounts = savedAccounts.filter((acc) => acc.email !== currentUser?.email);
+    localStorage.setItem('saved_accounts', JSON.stringify(updatedAccounts));
+
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+
+    if (updatedAccounts.length > 0) {
+      const nextAcc = updatedAccounts[0];
+      localStorage.setItem('token', nextAcc.token);
+      localStorage.setItem('user', JSON.stringify({ name: nextAcc.name, email: nextAcc.email }));
+      setCurrentUser({ name: nextAcc.name, email: nextAcc.email });
+      showToast(`Switched to ${nextAcc.name}`);
+      fetchExpenses(nextAcc.token);
+    } else {
+      navigate('/login');
+    }
+  };
+
   const filteredExpenses = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
     return expenses.filter((e) => {
@@ -368,44 +375,51 @@ const handleLogout = () => {
                       {savedAccounts.map(
                         (acc) =>
                           acc.email !== currentUser?.email && (
-                            <div
+                            <button
                               key={acc.email}
-                              onClick={() => handleSwitchAccount(acc)}
-                              className="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between cursor-pointer transition"
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSwitchAccount(acc);
+                              }}
+                              className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between cursor-pointer transition border-none bg-transparent"
                             >
                               <span className="truncate">{acc.name}</span>
-                              <span className="text-[10px] text-indigo-500 font-bold">
+                              <span className="text-[10px] text-indigo-500 font-bold shrink-0 ml-2">
                                 Switch ➔
                               </span>
-                            </div>
+                            </button>
                           )
                       )}
                     </div>
                   )}
 
-                  <div
+                  <button
+                    type="button"
                     onClick={handleAddAccount}
-                    className="px-4 py-2.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 flex items-center gap-2 cursor-pointer transition"
+                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 flex items-center gap-2 cursor-pointer transition border-none bg-transparent"
                   >
                     <span>➕ Add another account</span>
-                  </div>
+                  </button>
 
-                  <div
+                  <button
+                    type="button"
                     onClick={() => setDarkMode(!darkMode)}
-                    className="px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between cursor-pointer transition"
+                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between cursor-pointer transition border-none bg-transparent"
                   >
                     <span>Appearance</span>
                     <span className="text-xs">{darkMode ? '🌙 Dark' : '☀️ Light'}</span>
-                  </div>
+                  </button>
 
                   <div className="border-t border-slate-100 dark:border-slate-800 pt-1">
-                    <div
+                    <button
+                      type="button"
                       onClick={handleLogout}
-                      className="px-4 py-2.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center justify-between cursor-pointer transition rounded-b-xl"
+                      className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center justify-between cursor-pointer transition border-none bg-transparent rounded-b-xl"
                     >
                       <span>Logout Account</span>
                       <span>🚪</span>
-                    </div>
+                    </button>
                   </div>
                 </div>
               )}
@@ -466,7 +480,7 @@ const handleLogout = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold rounded-xl text-sm shadow-md transition active:scale-95 cursor-pointer"
+                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold rounded-xl text-sm shadow-md transition active:scale-95 cursor-pointer border-none"
               >
                 {submitting ? 'Adding...' : 'Add Transaction'}
               </button>
