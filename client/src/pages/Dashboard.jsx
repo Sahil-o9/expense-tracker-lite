@@ -139,8 +139,7 @@ export default function Dashboard() {
       setExpenses(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       if (err.response?.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        localStorage.clear();
         navigate('/login');
       } else {
         showToast('Failed to load expenses', 'error');
@@ -251,15 +250,12 @@ export default function Dashboard() {
     setDeleteId(id);
   }, []);
 
-  // Updated Account Switch Handler
   const handleSwitchAccount = useCallback((acc) => {
     if (!acc || !acc.token) return;
 
-    // Update LocalStorage
     localStorage.setItem('token', acc.token);
     localStorage.setItem('user', JSON.stringify({ name: acc.name, email: acc.email }));
 
-    // Update React State
     setCurrentUser({ name: acc.name, email: acc.email });
     setIsSettingsOpen(false);
 
@@ -267,7 +263,6 @@ export default function Dashboard() {
     fetchExpenses(acc.token);
   }, [showToast, fetchExpenses]);
 
-  // Updated Add Account Handler
   const handleAddAccount = () => {
     setIsSettingsOpen(false);
     localStorage.removeItem('token');
@@ -275,26 +270,9 @@ export default function Dashboard() {
     navigate('/login');
   };
 
-  // Updated Logout Handler
   const handleLogout = () => {
-    setIsSettingsOpen(false);
-
-    const updatedAccounts = savedAccounts.filter((acc) => acc.email !== currentUser?.email);
-    localStorage.setItem('saved_accounts', JSON.stringify(updatedAccounts));
-
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-
-    if (updatedAccounts.length > 0) {
-      const nextAcc = updatedAccounts[0];
-      localStorage.setItem('token', nextAcc.token);
-      localStorage.setItem('user', JSON.stringify({ name: nextAcc.name, email: nextAcc.email }));
-      setCurrentUser({ name: nextAcc.name, email: nextAcc.email });
-      showToast(`Switched to ${nextAcc.name}`);
-      fetchExpenses(nextAcc.token);
-    } else {
-      navigate('/login');
-    }
+    localStorage.clear();
+    window.location.href = "/login"; 
   };
 
   const filteredExpenses = useMemo(() => {
