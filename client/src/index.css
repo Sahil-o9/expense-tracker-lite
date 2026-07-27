@@ -270,3 +270,8 @@ button:active {
     transform: translateY(0);
   }
 }
+/* Add to top of index.css */
+button {
+  background-color: transparent;
+  border: none;
+}
