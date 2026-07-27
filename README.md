@@ -57,19 +57,17 @@ cd expense-tracker-lite
 
 #### 2. Backend Setup
 
-Navigate to backend directory:
+Install dependencies:
 
 ```bash
-cd server
-
 # Install dependencies
 npm install
 
-# Create a .env file in the backend folder
+# Create a .env file in the root directory
 touch .env
 ```
 
-Add the following environment variables to your `server/.env`:
+Add the following environment variables to your `.env`:
 
 ```
 PORT=5000
@@ -123,13 +121,12 @@ expense-tracker-lite/
 │   ├── tailwind.config.js
 │   └── vite.config.js
 │
-└── server/                # Express Backend
-    ├── config/            # DB connection
-    ├── controllers/       # Route controllers
-    ├── models/            # Mongoose schemas (User, Expense)
-    ├── routes/            # API endpoints
-    ├── server.js          # App entry point
-    └── package.json
+├── config/                # DB connection
+├── controllers/           # Route controllers
+├── models/                # Mongoose schemas (User, Expense)
+├── routes/                # API endpoints
+├── server.js              # App entry point
+└── package.json
 ```
 
 ---
