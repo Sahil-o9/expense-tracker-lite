@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:5000';
+
 // Modernized Expense Card Component
 const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
   const amount = Number(exp.amount) || 0;
@@ -98,7 +100,6 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
-  // Memoize currentUser object to prevent infinite re-renders in useEffect
   const currentUser = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('user') || '{}');
@@ -107,7 +108,6 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Accounts saved for multi-account switching
   const [savedAccounts, setSavedAccounts] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('saved_accounts') || '[]');
@@ -121,7 +121,6 @@ export default function Dashboard() {
     []
   );
 
-  // Keep current active account stored in saved_accounts array
   useEffect(() => {
     if (token && currentUser?.email) {
       setSavedAccounts((prev) => {
@@ -145,7 +144,6 @@ export default function Dashboard() {
     }
   }, [token, currentUser]);
 
-  // Handle clicking outside of dropdown menus
   useEffect(() => {
     function handleClickOutside(event) {
       if (categoryRef.current && !categoryRef.current.contains(event.target)) {
@@ -159,7 +157,6 @@ export default function Dashboard() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Theme Handling
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -175,12 +172,11 @@ export default function Dashboard() {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  // Fetch Expenses with useCallback & Cleanup
   const fetchExpenses = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     try {
-      const res = await axios.get('http://localhost:5000/api/expenses', {
+      const res = await axios.get(`${API_BASE_URL}/api/expenses`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setExpenses(Array.isArray(res.data) ? res.data : []);
@@ -212,15 +208,21 @@ export default function Dashboard() {
 
     try {
       await axios.post(
-        'http://localhost:5000/api/expenses',
-        { ...formData, amount: Number(formData.amount) },
+        `${API_BASE_URL}/api/expenses`,
+        {
+          title: formData.title,
+          amount: Number(formData.amount),
+          category: formData.category,
+          date: new Date().toISOString(),
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setFormData({ title: '', amount: '', category: 'Food' });
       showToast('Expense added successfully!');
       fetchExpenses();
     } catch (err) {
-      showToast('Error adding expense', 'error');
+      console.error('Add expense error:', err.response?.data || err.message);
+      showToast(err.response?.data?.message || 'Error adding expense', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -229,7 +231,7 @@ export default function Dashboard() {
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
     try {
-      await axios.delete(`http://localhost:5000/api/expenses/${deleteId}`, {
+      await axios.delete(`${API_BASE_URL}/api/expenses/${deleteId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       showToast('Expense deleted');
@@ -266,18 +268,16 @@ export default function Dashboard() {
     navigate('/login');
   };
 
-  // Real-time filtering using useMemo
   const filteredExpenses = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
     return expenses.filter((e) => {
       const matchesQuery =
-        e.title.toLowerCase().includes(query) || e.category.toLowerCase().includes(query);
+        e.title?.toLowerCase().includes(query) || e.category?.toLowerCase().includes(query);
       const matchesCategory = selectedCategory === 'All' || e.category === selectedCategory;
       return matchesQuery && matchesCategory;
     });
   }, [expenses, searchQuery, selectedCategory]);
 
-  // Total Calculation
   const totalAmount = useMemo(() => {
     return filteredExpenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   }, [filteredExpenses]);
@@ -328,7 +328,6 @@ export default function Dashboard() {
               {/* Popup Menu */}
               {isSettingsOpen && (
                 <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl py-2 z-50 space-y-1">
-                  {/* Current Active User Banner */}
                   <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                       Active Account
@@ -339,7 +338,6 @@ export default function Dashboard() {
                     <p className="text-[11px] text-slate-400 truncate">{currentUser?.email}</p>
                   </div>
 
-                  {/* Switch Account Section */}
                   {savedAccounts.length > 1 && (
                     <div className="py-1 border-b border-slate-100 dark:border-slate-800">
                       <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
@@ -363,7 +361,6 @@ export default function Dashboard() {
                     </div>
                   )}
 
-                  {/* Options */}
                   <div
                     onClick={handleAddAccount}
                     className="px-4 py-2.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 flex items-center gap-2 cursor-pointer transition"
@@ -458,10 +455,8 @@ export default function Dashboard() {
 
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto">
-        {/* Top Controls Header */}
         <div className="bg-white dark:bg-[#1E293B] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            {/* Search Input */}
             <div className="relative w-full sm:w-72">
               <input
                 type="text"
@@ -475,7 +470,6 @@ export default function Dashboard() {
               </span>
             </div>
 
-            {/* FLOATING CATEGORY SELECTOR */}
             <div className="relative w-full sm:w-56" ref={categoryRef}>
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                 Filter Category
@@ -492,7 +486,6 @@ export default function Dashboard() {
                 <span className="text-slate-400 text-[10px]">{isCategoryOpen ? '▲' : '▼'}</span>
               </div>
 
-              {/* Floating Category Menu */}
               {isCategoryOpen && (
                 <div className="absolute left-0 right-0 mt-2 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl py-1 z-30 max-h-56 overflow-y-auto">
                   {categories.map((cat) => (
@@ -516,7 +509,6 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Total Spending Counter */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-400 font-semibold uppercase">Total:</span>
               <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
@@ -526,7 +518,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* EXPENSES CARD GRID */}
         <div className="space-y-4">
           <div className="flex justify-between items-center px-1">
             <h3 className="font-bold text-slate-900 dark:text-white text-base">
