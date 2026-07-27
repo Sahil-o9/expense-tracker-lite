@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
-// Modernized Expense Card Component replacing the old table row
+// Modernized Expense Card Component
 const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
   const amount = Number(exp.amount) || 0;
   const percentage = totalAmount > 0 ? Math.min((amount / totalAmount) * 100, 100) : 0;
@@ -20,13 +20,13 @@ const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
           </h4>
         </div>
 
-        {/* Small Delete Icon Button with Explicit CSS Resets */}
+        {/* Delete Icon Button */}
         <button
           type="button"
           onClick={() => onDelete(exp._id)}
           aria-label="Delete Expense"
           title="Delete Expense"
-          className="!w-auto !h-auto !min-w-0 !p-1.5 !bg-transparent hover:!bg-red-100 dark:hover:!bg-red-950/50 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors cursor-pointer shrink-0 border-none shadow-none leading-none flex items-center justify-center"
+          className="p-1.5 bg-transparent hover:bg-red-100 dark:hover:bg-red-950/50 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors cursor-pointer shrink-0 border-none shadow-none flex items-center justify-center"
         >
           <svg
             className="w-4 h-4 pointer-events-none"
@@ -56,7 +56,7 @@ const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
           </span>
         </div>
 
-        {/* Share progress bar relative to total expenses */}
+        {/* Share progress bar */}
         <div className="space-y-1">
           <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
             <div
@@ -77,6 +77,7 @@ export default function Dashboard() {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
@@ -96,13 +97,23 @@ export default function Dashboard() {
 
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
-  const currentUser = JSON.parse(
-    localStorage.getItem('user') || '{"name": "User", "email": "user@example.com"}'
-  );
+
+  // Memoize currentUser object to prevent infinite re-renders in useEffect
+  const currentUser = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || '{}');
+    } catch {
+      return { name: 'User', email: 'user@example.com' };
+    }
+  }, []);
 
   // Accounts saved for multi-account switching
   const [savedAccounts, setSavedAccounts] = useState(() => {
-    return JSON.parse(localStorage.getItem('saved_accounts') || '[]');
+    try {
+      return JSON.parse(localStorage.getItem('saved_accounts') || '[]');
+    } catch {
+      return [];
+    }
   });
 
   const categories = useMemo(
@@ -112,14 +123,14 @@ export default function Dashboard() {
 
   // Keep current active account stored in saved_accounts array
   useEffect(() => {
-    if (token && currentUser.email) {
+    if (token && currentUser?.email) {
       setSavedAccounts((prev) => {
         const exists = prev.some((acc) => acc.email === currentUser.email);
         let updated;
         if (exists) {
           updated = prev.map((acc) =>
             acc.email === currentUser.email
-              ? { ...acc, name: currentUser.name, token }
+              ? { ...acc, name: currentUser.name || 'User', token }
               : acc
           );
         } else {
@@ -132,7 +143,7 @@ export default function Dashboard() {
         return updated;
       });
     }
-  }, [token, currentUser.email, currentUser.name]);
+  }, [token, currentUser]);
 
   // Handle clicking outside of dropdown menus
   useEffect(() => {
@@ -148,6 +159,7 @@ export default function Dashboard() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Theme Handling
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -163,7 +175,7 @@ export default function Dashboard() {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  // Fetch Expenses with useCallback
+  // Fetch Expenses with useCallback & Cleanup
   const fetchExpenses = useCallback(async () => {
     if (!token) return;
     setLoading(true);
@@ -196,6 +208,8 @@ export default function Dashboard() {
   const handleAddExpense = async (e) => {
     e.preventDefault();
     if (!formData.title || !formData.amount) return;
+    setSubmitting(true);
+
     try {
       await axios.post(
         'http://localhost:5000/api/expenses',
@@ -207,6 +221,8 @@ export default function Dashboard() {
       fetchExpenses();
     } catch (err) {
       showToast('Error adding expense', 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -228,7 +244,6 @@ export default function Dashboard() {
     setDeleteId(id);
   }, []);
 
-  // Switch to another logged-in account
   const handleSwitchAccount = (acc) => {
     localStorage.setItem('token', acc.token);
     localStorage.setItem('user', JSON.stringify({ name: acc.name, email: acc.email }));
@@ -237,16 +252,14 @@ export default function Dashboard() {
     window.location.reload();
   };
 
-  // Add new account (Navigates to login)
   const handleAddAccount = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/login');
   };
 
-  // Full Logout
   const handleLogout = () => {
-    const updated = savedAccounts.filter((acc) => acc.email !== currentUser.email);
+    const updated = savedAccounts.filter((acc) => acc.email !== currentUser?.email);
     localStorage.setItem('saved_accounts', JSON.stringify(updated));
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -264,7 +277,7 @@ export default function Dashboard() {
     });
   }, [expenses, searchQuery, selectedCategory]);
 
-  // Memoized Total Calculation
+  // Total Calculation
   const totalAmount = useMemo(() => {
     return filteredExpenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   }, [filteredExpenses]);
@@ -287,7 +300,7 @@ export default function Dashboard() {
       {/* LEFT SIDEBAR (Creation Panel) */}
       <aside className="w-full md:w-80 bg-white dark:bg-[#1E293B] border-r border-slate-200 dark:border-slate-800 p-6 flex flex-col justify-between shrink-0">
         <div className="space-y-6">
-          {/* Brand Header with 3-Dots Settings Menu */}
+          {/* Brand Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-500/30">
@@ -306,31 +319,24 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                className="!bg-slate-100 dark:!bg-slate-800 !text-slate-600 dark:!text-slate-300 hover:!bg-slate-200 dark:hover:!bg-slate-700 w-8 h-8 flex items-center justify-center rounded-xl !border-none !shadow-none transition cursor-pointer"
+                className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 w-8 h-8 flex items-center justify-center rounded-xl border-none shadow-none transition cursor-pointer"
                 aria-label="Settings Menu"
-                style={{ backgroundColor: darkMode ? '#1E293B' : '#F1F5F9' }}
               >
                 ⋮
               </button>
 
-              {/* Clean Styled Popup Menu */}
+              {/* Popup Menu */}
               {isSettingsOpen && (
-                <div
-                  className="absolute right-0 mt-2 w-56 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl py-2 z-50 space-y-1"
-                  style={{
-                    backgroundColor: darkMode ? '#0F172A' : '#FFFFFF',
-                    color: darkMode ? '#F8FAFC' : '#0F172A',
-                  }}
-                >
+                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl py-2 z-50 space-y-1">
                   {/* Current Active User Banner */}
                   <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                       Active Account
                     </p>
                     <p className="text-xs font-bold text-slate-900 dark:text-white truncate mt-0.5">
-                      {currentUser.name || 'User'}
+                      {currentUser?.name || 'User'}
                     </p>
-                    <p className="text-[11px] text-slate-400 truncate">{currentUser.email}</p>
+                    <p className="text-[11px] text-slate-400 truncate">{currentUser?.email}</p>
                   </div>
 
                   {/* Switch Account Section */}
@@ -341,7 +347,7 @@ export default function Dashboard() {
                       </p>
                       {savedAccounts.map(
                         (acc) =>
-                          acc.email !== currentUser.email && (
+                          acc.email !== currentUser?.email && (
                             <div
                               key={acc.email}
                               onClick={() => handleSwitchAccount(acc)}
@@ -357,7 +363,7 @@ export default function Dashboard() {
                     </div>
                   )}
 
-                  {/* Add Another Account Option */}
+                  {/* Options */}
                   <div
                     onClick={handleAddAccount}
                     className="px-4 py-2.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 flex items-center gap-2 cursor-pointer transition"
@@ -365,7 +371,6 @@ export default function Dashboard() {
                     <span>➕ Add another account</span>
                   </div>
 
-                  {/* Appearance Toggle */}
                   <div
                     onClick={() => setDarkMode(!darkMode)}
                     className="px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between cursor-pointer transition"
@@ -375,7 +380,6 @@ export default function Dashboard() {
                   </div>
 
                   <div className="border-t border-slate-100 dark:border-slate-800 pt-1">
-                    {/* Logout Option */}
                     <div
                       onClick={handleLogout}
                       className="px-4 py-2.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center justify-between cursor-pointer transition rounded-b-xl"
@@ -422,7 +426,9 @@ export default function Dashboard() {
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-slate-400 uppercase">Category</label>
+                <label className="text-[11px] font-semibold text-slate-400 uppercase">
+                  Category
+                </label>
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -440,9 +446,10 @@ export default function Dashboard() {
 
               <button
                 type="submit"
-                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm shadow-md transition active:scale-95 cursor-pointer"
+                disabled={submitting}
+                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold rounded-xl text-sm shadow-md transition active:scale-95 cursor-pointer"
               >
-                Add Transaction
+                {submitting ? 'Adding...' : 'Add Transaction'}
               </button>
             </form>
           </div>
@@ -451,7 +458,7 @@ export default function Dashboard() {
 
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto">
-        {/* Top Header Card */}
+        {/* Top Controls Header */}
         <div className="bg-white dark:bg-[#1E293B] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             {/* Search Input */}
@@ -487,13 +494,7 @@ export default function Dashboard() {
 
               {/* Floating Category Menu */}
               {isCategoryOpen && (
-                <div
-                  className="absolute left-0 right-0 mt-2 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl py-1 z-30 max-h-56 overflow-y-auto"
-                  style={{
-                    backgroundColor: darkMode ? '#0F172A' : '#FFFFFF',
-                    color: darkMode ? '#F8FAFC' : '#0F172A',
-                  }}
-                >
+                <div className="absolute left-0 right-0 mt-2 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl py-1 z-30 max-h-56 overflow-y-auto">
                   {categories.map((cat) => (
                     <div
                       key={cat}
@@ -525,7 +526,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* EXPENSES CARD GRID BLOCK */}
+        {/* EXPENSES CARD GRID */}
         <div className="space-y-4">
           <div className="flex justify-between items-center px-1">
             <h3 className="font-bold text-slate-900 dark:text-white text-base">
@@ -538,7 +539,7 @@ export default function Dashboard() {
                   setSearchQuery('');
                   setSelectedCategory('All');
                 }}
-                className="!bg-transparent !text-indigo-500 hover:underline font-medium text-xs !p-0 !border-none cursor-pointer"
+                className="bg-transparent text-indigo-500 hover:underline font-medium text-xs p-0 border-none cursor-pointer"
               >
                 Reset Filters
               </button>
@@ -578,14 +579,14 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => setDeleteId(null)}
-                className="flex-1 py-2 !bg-slate-100 dark:!bg-slate-800 !text-slate-700 dark:!text-slate-200 rounded-xl text-xs font-semibold !border-none cursor-pointer"
+                className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold border-none cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleDelete}
-                className="flex-1 py-2 !bg-red-600 !text-white rounded-xl text-xs font-semibold !border-none cursor-pointer"
+                className="flex-1 py-2 bg-red-600 text-white rounded-xl text-xs font-semibold border-none cursor-pointer"
               >
                 Delete
               </button>
