@@ -13,11 +13,11 @@ const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
     <div className="group relative bg-white dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between space-y-4">
       {/* Header Info */}
       <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
+        <div className="space-y-1.5 min-w-0 flex-1">
           <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/40">
             {exp.category}
           </span>
-          <h4 className="font-bold text-slate-900 dark:text-white text-base leading-snug break-words">
+          <h4 className="font-bold text-slate-900 dark:text-white text-base leading-snug truncate">
             {exp.title}
           </h4>
         </div>
@@ -28,7 +28,7 @@ const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
           onClick={() => onDelete(exp._id)}
           aria-label="Delete Expense"
           title="Delete Expense"
-          className="p-1.5 bg-transparent hover:bg-red-100 dark:hover:bg-red-950/50 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors cursor-pointer shrink-0 border-none shadow-none flex items-center justify-center"
+          className="p-2 bg-transparent hover:bg-red-50 dark:hover:bg-red-950/50 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors cursor-pointer shrink-0 border-none shadow-none flex items-center justify-center"
         >
           <svg
             className="w-4 h-4 pointer-events-none"
@@ -48,7 +48,7 @@ const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
       </div>
 
       {/* Amount & Share Bar */}
-      <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+      <div className="space-y-2 pt-3 border-t border-slate-100 dark:border-slate-800/80">
         <div className="flex items-baseline justify-between">
           <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
             Amount
