@@ -22,13 +22,13 @@ const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
           </h4>
         </div>
 
-        {/* Delete Icon Button (Forforced Dimensions to prevent "Red Bar") */}
+        {/* Delete Icon Button */}
         <button
           type="button"
           onClick={() => onDelete(exp._id)}
           aria-label="Delete Expense"
           title="Delete Expense"
-          className="p-2 bg-transparent hover:bg-red-50 dark:hover:bg-red-950/50 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors cursor-pointer shrink-0 border-none shadow-none flex items-center justify-center"
+          className="p-2 bg-transparent hover:bg-red-50 dark:hover:bg-red-950/50 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors cursor-pointer shrink-0"
           style={{
             width: '32px',
             height: '32px',
@@ -42,6 +42,7 @@ const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
             alignItems: 'center',
             justifyContent: 'center',
             background: 'transparent',
+            backgroundColor: 'transparent',
             border: 'none',
             outline: 'none',
             boxShadow: 'none',
@@ -76,7 +77,7 @@ const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
           </span>
         </div>
 
-        {/* Share progress bar (Forced dimensions to prevent "Blue Bar") */}
+        {/* Share progress bar */}
         <div className="space-y-1">
           <div
             className="w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"
@@ -158,7 +159,6 @@ export default function Dashboard() {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  // Fetch Expenses dynamically based on active token
   const fetchExpenses = useCallback(async (activeToken) => {
     const tokenToUse = activeToken || localStorage.getItem('token');
     if (!tokenToUse) return;
@@ -336,10 +336,9 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* LEFT SIDEBAR (Creation Panel) */}
+      {/* LEFT SIDEBAR */}
       <aside className="w-full md:w-80 bg-white dark:bg-[#1E293B] border-r border-slate-200 dark:border-slate-800 p-6 flex flex-col justify-between shrink-0">
         <div className="space-y-6">
-          {/* Brand Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-500/30">
@@ -358,13 +357,22 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 w-8 h-8 flex items-center justify-center rounded-xl border-none shadow-none transition cursor-pointer"
+                className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 w-8 h-8 flex items-center justify-center rounded-xl border-none transition cursor-pointer"
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  border: 'none',
+                  outline: 'none',
+                  background: 'transparent',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
                 aria-label="Settings Menu"
               >
                 ⋮
               </button>
 
-              {/* Popup Menu */}
               {isSettingsOpen && (
                 <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl py-2 z-50 space-y-1">
                   <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
@@ -392,7 +400,8 @@ export default function Dashboard() {
                                 e.stopPropagation();
                                 handleSwitchAccount(acc);
                               }}
-                              className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between cursor-pointer transition border-none bg-transparent"
+                              className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between cursor-pointer transition"
+                              style={{ background: 'none', border: 'none', outline: 'none' }}
                             >
                               <span className="truncate">{acc.name}</span>
                               <span className="text-[10px] text-indigo-500 font-bold shrink-0 ml-2">
@@ -407,7 +416,8 @@ export default function Dashboard() {
                   <button
                     type="button"
                     onClick={handleAddAccount}
-                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 flex items-center gap-2 cursor-pointer transition border-none bg-transparent"
+                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 flex items-center gap-2 cursor-pointer transition"
+                    style={{ background: 'none', border: 'none', outline: 'none' }}
                   >
                     <span>➕ Add another account</span>
                   </button>
@@ -415,7 +425,8 @@ export default function Dashboard() {
                   <button
                     type="button"
                     onClick={() => setDarkMode(!darkMode)}
-                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between cursor-pointer transition border-none bg-transparent"
+                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between cursor-pointer transition"
+                    style={{ background: 'none', border: 'none', outline: 'none' }}
                   >
                     <span>Appearance</span>
                     <span className="text-xs">{darkMode ? '🌙 Dark' : '☀️ Light'}</span>
@@ -425,7 +436,8 @@ export default function Dashboard() {
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center justify-between cursor-pointer transition border-none bg-transparent rounded-b-xl"
+                      className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center justify-between cursor-pointer transition rounded-b-xl"
+                      style={{ background: 'none', border: 'none', outline: 'none' }}
                     >
                       <span>Logout Account</span>
                       <span>🚪</span>
@@ -564,9 +576,10 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Expense Log Header Section */}
         <div className="space-y-4">
-          <div className="flex justify-between items-center px-1">
-            <h3 className="font-bold text-slate-900 dark:text-white text-base">
+          <div className="flex justify-between items-center px-1" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 className="font-bold text-slate-900 dark:text-white text-base" style={{ margin: 0 }}>
               Expense Log ({filteredExpenses.length})
             </h3>
             {(searchQuery || selectedCategory !== 'All') && (
@@ -576,7 +589,18 @@ export default function Dashboard() {
                   setSearchQuery('');
                   setSelectedCategory('All');
                 }}
-                className="bg-transparent text-indigo-500 hover:underline font-medium text-xs p-0 border-none cursor-pointer"
+                className="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold text-xs cursor-pointer"
+                style={{
+                  background: 'none',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  boxShadow: 'none',
+                  padding: 0,
+                  margin: 0,
+                  width: 'auto',
+                  display: 'inline-block'
+                }}
               >
                 Reset Filters
               </button>
