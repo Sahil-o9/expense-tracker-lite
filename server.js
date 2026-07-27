@@ -5,29 +5,24 @@ require('dotenv').config();
 
 const app = express();
 
-// Security & CORS configuration
-const allowedOrigins = [
-  'http://localhost:5173', // Vite default dev server
-  process.env.CLIENT_URL,   // Vercel production frontend URL
-].filter(Boolean);
-
+// Modern, robust CORS setup
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl) or if in allowed origins
-      if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
-        callback(null, true);
-      } else {
-        callback(new Error('Blocked by CORS policy'));
-      }
-    },
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://expense-tracker-lite-rho.vercel.app', // Your Vercel frontend domain
+      process.env.CLIENT_URL,
+    ].filter(Boolean),
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 
 app.use(express.json());
 
-// Health Check Endpoint (useful for Render/Vercel uptime monitoring)
+// Health check endpoint
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'TrackLite API is running' });
 });
