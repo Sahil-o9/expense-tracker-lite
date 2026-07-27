@@ -246,28 +246,50 @@ export default function Dashboard() {
     setDeleteId(id);
   }, []);
 
-  const handleSwitchAccount = (acc) => {
-    localStorage.setItem('token', acc.token);
-    localStorage.setItem('user', JSON.stringify({ name: acc.name, email: acc.email }));
-    setIsSettingsOpen(false);
-    showToast(`Switched to ${acc.name}`);
-    window.location.reload();
-  };
+  // Updated Account Switch Handler
+const handleSwitchAccount = (acc) => {
+  // Update localStorage with selected account details
+  localStorage.setItem('token', acc.token);
+  localStorage.setItem('user', JSON.stringify({ name: acc.name, email: acc.email }));
+  
+  setIsSettingsOpen(false);
+  showToast(`Switched to ${acc.name}`);
 
-  const handleAddAccount = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  // Fetch expenses again for the newly selected account token
+  fetchExpenses();
+};
+
+// Updated Add Account Handler
+const handleAddAccount = () => {
+  setIsSettingsOpen(false);
+  // Clear active session token but keep saved_accounts intact
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  navigate('/login');
+};
+
+// Updated Logout Handler
+const handleLogout = () => {
+  setIsSettingsOpen(false);
+  
+  // Remove active user from saved_accounts
+  const updatedAccounts = savedAccounts.filter((acc) => acc.email !== currentUser?.email);
+  localStorage.setItem('saved_accounts', JSON.stringify(updatedAccounts));
+  
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  
+  // If there are other saved accounts left, switch to the first one automatically
+  if (updatedAccounts.length > 0) {
+    const nextAcc = updatedAccounts[0];
+    localStorage.setItem('token', nextAcc.token);
+    localStorage.setItem('user', JSON.stringify({ name: nextAcc.name, email: nextAcc.email }));
+    showToast(`Switched to ${nextAcc.name}`);
+    fetchExpenses();
+  } else {
     navigate('/login');
-  };
-
-  const handleLogout = () => {
-    const updated = savedAccounts.filter((acc) => acc.email !== currentUser?.email);
-    localStorage.setItem('saved_accounts', JSON.stringify(updated));
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
-
+  }
+};
   const filteredExpenses = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
     return expenses.filter((e) => {
