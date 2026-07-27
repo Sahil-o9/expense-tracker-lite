@@ -1,0 +1,139 @@
+/* =========================================================
+   Global CSS Variables & Theme Defaults
+   ========================================================= */
+:root {
+  --bg-color: #0f172a;
+  --card-bg: rgba(255, 255, 255, 0.07);
+  --card-border: rgba(255, 255, 255, 0.12);
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+}
+
+/* =========================================================
+   Layout Grid (Dynamic Mobile vs. Desktop)
+   ========================================================= */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Glassmorphism Cards */
+.glass-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  color: var(--text-main);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* =========================================================
+   Mobile UI Elements (Touch & Floating Actions)
+   ========================================================= */
+
+/* Floating Action Button (FAB) for Mobile Quick-Add */
+.mobile-fab {
+  display: flex;
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 28px;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45);
+  border: none;
+  cursor: pointer;
+  z-index: 100;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.mobile-fab:active {
+  transform: scale(0.92);
+}
+
+/* Mobile Modal & Slide-Up Drawer */
+.mobile-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  z-index: 200;
+}
+
+.mobile-modal-content {
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: #1e1e2e;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  padding: 1.5rem;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* =========================================================
+   Shared UI Components (Counter, Inputs, Buttons)
+   ========================================================= */
+.counter {
+  font-size: 16px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  color: var(--accent);
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  transition: all 0.2s ease;
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.counter:hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: var(--accent);
+}
+
+.counter:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* =========================================================
+   Responsive Breakpoints
+   ========================================================= */
+
+/* Mobile / Tablet Small Screens (< 1024px) */
+@media (max-width: 1023px) {
+  .desktop-only-form {
+    display: none !important;
+  }
+}
+
+/* Windows PC / Desktop Viewports (>= 1024px) */
+@media (min-width: 1024px) {
+  .dashboard-layout {
+    grid-template-columns: 360px 1fr;
+    gap: 2rem;
+    padding: 2rem;
+  }
+
+  /* Hide mobile drawer and FAB on PC screens */
+  .mobile-fab, 
+  .mobile-modal-overlay {
+    display: none !important;
+  }
+}

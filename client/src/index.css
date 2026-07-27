@@ -1,0 +1,272 @@
+/* =========================================================
+   Global CSS Variables & Theme Defaults
+   ========================================================= */
+:root {
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --card-bg: rgba(255, 255, 255, 0.95);
+  --text-dark: #1e293b;
+  --text-muted: #64748b;
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+}
+
+/* Base reset & Touch ergonomics */
+html, body {
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  min-height: 100vh;
+  background: var(--bg-gradient);
+  color: var(--text-dark);
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* =========================================================
+   Layout & Responsive Container
+   ========================================================= */
+.container {
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  width: 100%;
+  max-width: 550px;
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  margin: 20px auto;
+}
+
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Desktop Dual-Column Viewport (Windows PC) */
+@media (min-width: 1024px) {
+  .dashboard-layout {
+    grid-template-columns: 380px 1fr;
+    gap: 2rem;
+    padding: 2rem;
+  }
+
+  .mobile-fab, 
+  .mobile-modal-overlay {
+    display: none !important;
+  }
+}
+
+/* Mobile Viewport */
+@media (max-width: 1023px) {
+  .desktop-only-form {
+    display: none !important;
+  }
+}
+
+/* =========================================================
+   Navigation & Stat Cards
+   ========================================================= */
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.nav h2 {
+  font-size: 1.5rem;
+  color: var(--text-dark);
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 1.1rem;
+  color: var(--text-dark);
+  margin-bottom: 12px;
+}
+
+.stats-card {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+}
+
+.stats-card h3 {
+  color: white;
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* =========================================================
+   Form Elements & Touch Sizing (Mobile Safari Optimized)
+   ========================================================= */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+/* Minimum 48px height prevents auto-zoom on mobile devices */
+button, input, select {
+  min-height: 48px;
+  font-size: 16px;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  outline: none;
+  background-color: #ffffff;
+  color: var(--text-dark);
+}
+
+input:focus, select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+button:hover {
+  background-color: var(--primary-hover);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.btn-logout {
+  width: auto !important;
+  padding: 8px 16px !important;
+  background-color: #64748b !important;
+  min-height: 38px !important;
+}
+
+.btn-logout:hover {
+  background-color: #475569 !important;
+}
+
+/* =========================================================
+   Expense Items & Transactions
+   ========================================================= */
+.expense-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.expense-item strong {
+  color: var(--text-dark);
+  font-size: 1rem;
+}
+
+.expense-category {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: #e0e7ff;
+  color: #4338ca;
+  margin-left: 8px;
+}
+
+.delete-btn {
+  width: auto !important;
+  padding: 6px 12px !important;
+  background-color: var(--danger) !important;
+  font-size: 0.85rem !important;
+  min-height: 36px !important;
+}
+
+.delete-btn:hover {
+  background-color: var(--danger-hover) !important;
+}
+
+/* =========================================================
+   Mobile Drawer & Floating Action Button
+   ========================================================= */
+.mobile-fab {
+  display: flex;
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 28px;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+  border: none;
+  cursor: pointer;
+  z-index: 100;
+}
+
+.mobile-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  z-index: 200;
+}
+
+.mobile-modal-content {
+  width: 100%;
+  background: #ffffff;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  padding: 1.5rem;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
