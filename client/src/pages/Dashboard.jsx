@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:5000';
 
-// Modernized Expense Card Component
+// Modernized Expense Card Component with Inline Layout Protection
 const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
   const amount = Number(exp.amount) || 0;
   const percentage = totalAmount > 0 ? Math.min((amount / totalAmount) * 100, 100) : 0;
@@ -12,7 +12,7 @@ const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
   return (
     <div className="group relative bg-white dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between space-y-4">
       {/* Header Info */}
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-3" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div className="space-y-1.5 min-w-0 flex-1">
           <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/40">
             {exp.category}
@@ -22,16 +22,34 @@ const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
           </h4>
         </div>
 
-        {/* Delete Icon Button */}
+        {/* Delete Icon Button (Forforced Dimensions to prevent "Red Bar") */}
         <button
           type="button"
           onClick={() => onDelete(exp._id)}
           aria-label="Delete Expense"
           title="Delete Expense"
           className="p-2 bg-transparent hover:bg-red-50 dark:hover:bg-red-950/50 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors cursor-pointer shrink-0 border-none shadow-none flex items-center justify-center"
+          style={{
+            width: '32px',
+            height: '32px',
+            minWidth: '32px',
+            minHeight: '32px',
+            maxWidth: '32px',
+            maxHeight: '32px',
+            padding: 0,
+            margin: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'transparent',
+            border: 'none',
+            outline: 'none',
+            boxShadow: 'none',
+            flexShrink: 0
+          }}
         >
           <svg
-            className="w-4 h-4 pointer-events-none"
+            style={{ width: '16px', height: '16px', display: 'block', margin: 'auto' }}
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
@@ -49,7 +67,7 @@ const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
 
       {/* Amount & Share Bar */}
       <div className="space-y-2 pt-3 border-t border-slate-100 dark:border-slate-800/80">
-        <div className="flex items-baseline justify-between">
+        <div className="flex items-baseline justify-between" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
             Amount
           </span>
@@ -58,15 +76,29 @@ const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
           </span>
         </div>
 
-        {/* Share progress bar */}
+        {/* Share progress bar (Forced dimensions to prevent "Blue Bar") */}
         <div className="space-y-1">
-          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+          <div
+            className="w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"
+            style={{
+              width: '100%',
+              height: '6px',
+              minHeight: '6px',
+              maxHeight: '6px',
+              borderRadius: '9999px',
+              overflow: 'hidden'
+            }}
+          >
             <div
-              className="bg-indigo-600 dark:bg-indigo-500 h-full rounded-full transition-all duration-300"
-              style={{ width: `${percentage}%` }}
+              className="bg-indigo-600 dark:bg-indigo-500 rounded-full transition-all duration-300"
+              style={{
+                width: `${percentage}%`,
+                height: '100%',
+                borderRadius: '9999px'
+              }}
             />
           </div>
-          <p className="text-[10px] text-right text-slate-400 font-medium">
+          <p className="text-[10px] text-right text-slate-400 font-medium" style={{ textAlign: 'right', margin: 0 }}>
             {percentage.toFixed(1)}% of total
           </p>
         </div>
