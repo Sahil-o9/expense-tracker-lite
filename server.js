@@ -5,20 +5,40 @@ require('dotenv').config();
 
 const app = express();
 
-// Modern, robust CORS setup
+// Allowed explicit static origins
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://expense-tracker-lite-rho.vercel.app',
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
+// Dynamic, robust CORS setup to support Vercel preview deployments
 app.use(
   cors({
-    origin: [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'https://expense-tracker-lite-rho.vercel.app', // Your Vercel frontend domain
-      process.env.CLIENT_URL,
-    ].filter(Boolean),
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps, Postman, or server-to-server)
+      if (!origin) return callback(null, true);
+
+      // Check if origin matches allowed list OR ends with vercel.app
+      const isAllowed =
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app');
+
+      if (isAllowed) {
+        return callback(null, true);
+      } else {
+        return callback(new Error('CORS policy violation: Origin not allowed'), false);
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
+
+// Explicit preflight request handling
+app.options('*', cors());
 
 app.use(express.json());
 
