@@ -117,7 +117,7 @@ h3 {
 }
 
 /* =========================================================
-   Form Elements & Touch Sizing (Mobile Safari Optimized)
+   Form Elements & Touch Sizing
    ========================================================= */
 form {
   display: flex;
@@ -126,14 +126,11 @@ form {
   margin-bottom: 28px;
 }
 
-/* Minimum 48px height prevents auto-zoom on mobile devices */
-button, input, select {
-  min-height: 48px;
-  font-size: 16px;
-}
-
+/* Base interactive elements */
 input, select {
   width: 100%;
+  min-height: 48px;
+  font-size: 16px;
   padding: 12px 16px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
@@ -150,6 +147,8 @@ input:focus, select:focus {
 
 button {
   width: 100%;
+  min-height: 48px;
+  font-size: 16px;
   padding: 12px;
   background-color: var(--primary);
   color: white;
@@ -270,8 +269,38 @@ button:active {
     transform: translateY(0);
   }
 }
-/* Add to top of index.css */
-button {
-  background-color: transparent;
-  border: none;
+
+/* =========================================================
+   Toast Notification Styling Overrides (Fixes White Box)
+   ========================================================= */
+div[class*="toast"], 
+.Toastify__toast, 
+[role="status"] {
+  min-height: unset !important;
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  border-radius: 10px !important;
+  padding: 12px 18px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3) !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+/* Ensure inner elements/buttons inside toasts stay styled correctly */
+div[class*="toast"] button,
+.Toastify__toast button {
+  min-height: auto !important;
+  width: auto !important;
+  background: transparent !important;
+  padding: 0 !important;
+  color: #94a3b8 !important;
+}
+
+div[class*="toast"] button:hover,
+.Toastify__toast button:hover {
+  color: #ffffff !important;
 }
