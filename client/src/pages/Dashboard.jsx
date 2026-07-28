@@ -293,22 +293,26 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen w-full bg-slate-100 dark:bg-[#0F172A] text-slate-800 dark:text-slate-100 flex flex-col md:flex-row">
-      {/* Toast Notification (Highest Z-index & Top-Right) */}
+      {/* Toast Notification (High-Contrast for Light & Dark Modes) */}
       {toast && (
         <div className="fixed top-6 right-6 z-[9999] transition-all">
           <div
-            className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border text-sm font-bold backdrop-blur-md ${
+            className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border text-sm font-bold ${
               toast.type === 'error'
-                ? 'bg-red-600 text-white border-red-500 shadow-red-500/20'
-                : 'bg-emerald-600 text-white border-emerald-500 shadow-emerald-500/20'
+                ? 'bg-red-600 text-white border-red-500 shadow-red-500/30'
+                : 'bg-emerald-600 text-white border-emerald-500 shadow-emerald-600/30'
             }`}
           >
-            <span>{toast.type === 'error' ? '⚠️' : '✅'}</span>
-            <span>{toast.message}</span>
+            <span className="text-base leading-none">
+              {toast.type === 'error' ? '⚠️' : '✅'}
+            </span>
+            <span className="text-white font-semibold tracking-wide">
+              {toast.message}
+            </span>
             <button
               type="button"
               onClick={() => setToast(null)}
-              className="ml-2 text-white/80 hover:text-white bg-transparent border-none p-0 cursor-pointer text-xs"
+              className="ml-2 text-white/80 hover:text-white bg-transparent border-none p-0 cursor-pointer text-xs font-bold leading-none"
             >
               ✕
             </button>
