@@ -219,7 +219,7 @@ export default function Dashboard() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setFormData({ title: '', amount: '', category: 'Food' });
-      showToast('Expense added successfully!');
+      showToast('Expense added successfully!', 'success');
       fetchExpenses(token);
     } catch (err) {
       console.error('Add expense error:', err.response?.data || err.message);
@@ -237,7 +237,7 @@ export default function Dashboard() {
       await axios.delete(`${API_BASE_URL}/api/expenses/${deleteId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      showToast('Expense deleted');
+      showToast('Expense deleted successfully!', 'success');
       setDeleteId(null);
       fetchExpenses(token);
     } catch (err) {
@@ -293,16 +293,26 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen w-full bg-slate-100 dark:bg-[#0F172A] text-slate-800 dark:text-slate-100 flex flex-col md:flex-row">
-      {/* Toast Notification */}
+      {/* Toast Notification (Highest Z-index & Top-Right) */}
       {toast && (
-        <div
-          className={`fixed top-5 right-5 z-50 px-4 py-3 rounded-xl shadow-xl border text-sm font-semibold transition-all ${
-            toast.type === 'error'
-              ? 'bg-red-500 text-white border-red-600'
-              : 'bg-emerald-600 text-white border-emerald-700'
-          }`}
-        >
-          {toast.message}
+        <div className="fixed top-6 right-6 z-[9999] transition-all">
+          <div
+            className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border text-sm font-bold backdrop-blur-md ${
+              toast.type === 'error'
+                ? 'bg-red-600 text-white border-red-500 shadow-red-500/20'
+                : 'bg-emerald-600 text-white border-emerald-500 shadow-emerald-500/20'
+            }`}
+          >
+            <span>{toast.type === 'error' ? '⚠️' : '✅'}</span>
+            <span>{toast.message}</span>
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              className="ml-2 text-white/80 hover:text-white bg-transparent border-none p-0 cursor-pointer text-xs"
+            >
+              ✕
+            </button>
+          </div>
         </div>
       )}
 
@@ -470,21 +480,29 @@ export default function Dashboard() {
 
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto">
-        <div className="bg-white dark:bg-[#1E293B] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="bg-white dark:bg-[#1E293B] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
+            
+            {/* Search Input */}
             <div className="relative w-full sm:w-72">
-              <input
-                type="text"
-                placeholder="Search transactions..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              />
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">
-                🔍
-              </span>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                Search
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search transactions..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">
+                  🔍
+                </span>
+              </div>
             </div>
 
+            {/* Category Filter Dropdown */}
             <div className="relative w-full sm:w-56" ref={categoryRef}>
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                 Filter Category
@@ -495,14 +513,15 @@ export default function Dashboard() {
               >
                 <span>
                   {selectedCategory === 'All'
-                    ? 'Filter: All Categories'
-                    : `Category: ${selectedCategory}`}
+                    ? 'All Categories'
+                    : selectedCategory}
                 </span>
                 <span className="text-slate-400 text-[10px]">{isCategoryOpen ? '▲' : '▼'}</span>
               </div>
 
+              {/* Positioned cleanly below container using top-full */}
               {isCategoryOpen && (
-                <div className="absolute left-0 right-0 mt-2 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl py-1 z-30 max-h-56 overflow-y-auto">
+                <div className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl py-1 z-30 max-h-56 overflow-y-auto">
                   {CATEGORIES.map((cat) => (
                     <div
                       key={cat}
@@ -524,12 +543,16 @@ export default function Dashboard() {
               )}
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400 font-semibold uppercase">Total:</span>
-              <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
+            {/* Total Display */}
+            <div className="flex flex-col items-start sm:items-end justify-center">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                Total
+              </span>
+              <span className="text-xl font-extrabold text-indigo-600 dark:text-indigo-400 leading-tight">
                 ₹{totalAmount.toFixed(2)}
               </span>
             </div>
+
           </div>
         </div>
 
