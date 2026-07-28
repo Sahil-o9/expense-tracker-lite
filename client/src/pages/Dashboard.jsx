@@ -3,8 +3,9 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = import.meta.env?.VITE_API_URL || 'http://localhost:5000';
+const CATEGORIES = ['All', 'Food', 'Shopping', 'Travel', 'Bills', 'Education', 'Other'];
 
-// Modernized Expense Card Component with Inline Layout Protection
+// Modernized Expense Card Component
 const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
   const amount = Number(exp.amount) || 0;
   const percentage = totalAmount > 0 ? Math.min((amount / totalAmount) * 100, 100) : 0;
@@ -12,7 +13,7 @@ const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
   return (
     <div className="group relative bg-white dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between space-y-4">
       {/* Header Info */}
-      <div className="flex items-start justify-between gap-3" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+      <div className="flex items-start justify-between gap-3">
         <div className="space-y-1.5 min-w-0 flex-1">
           <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/40">
             {exp.category}
@@ -28,29 +29,10 @@ const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
           onClick={() => onDelete(exp._id)}
           aria-label="Delete Expense"
           title="Delete Expense"
-          className="p-2 bg-transparent hover:bg-red-50 dark:hover:bg-red-950/50 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors cursor-pointer shrink-0"
-          style={{
-            width: '32px',
-            height: '32px',
-            minWidth: '32px',
-            minHeight: '32px',
-            maxWidth: '32px',
-            maxHeight: '32px',
-            padding: 0,
-            margin: 0,
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'transparent',
-            backgroundColor: 'transparent',
-            border: 'none',
-            outline: 'none',
-            boxShadow: 'none',
-            flexShrink: 0
-          }}
+          className="w-8 h-8 p-0 m-0 shrink-0 inline-flex items-center justify-center bg-transparent hover:bg-red-50 dark:hover:bg-red-950/50 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors cursor-pointer border-none outline-none shadow-none"
         >
           <svg
-            style={{ width: '16px', height: '16px', display: 'block', margin: 'auto' }}
+            className="w-4 h-4 block m-auto"
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
@@ -61,14 +43,14 @@ const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
               strokeLinecap="round"
               strokeLinejoin="round"
               d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-            ></path>
+            />
           </svg>
         </button>
       </div>
 
       {/* Amount & Share Bar */}
       <div className="space-y-2 pt-3 border-t border-slate-100 dark:border-slate-800/80">
-        <div className="flex items-baseline justify-between" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <div className="flex items-baseline justify-between">
           <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
             Amount
           </span>
@@ -79,27 +61,13 @@ const ExpenseCardBlock = React.memo(({ exp, totalAmount, onDelete }) => {
 
         {/* Share progress bar */}
         <div className="space-y-1">
-          <div
-            className="w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"
-            style={{
-              width: '100%',
-              height: '6px',
-              minHeight: '6px',
-              maxHeight: '6px',
-              borderRadius: '9999px',
-              overflow: 'hidden'
-            }}
-          >
+          <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
             <div
-              className="bg-indigo-600 dark:bg-indigo-500 rounded-full transition-all duration-300"
-              style={{
-                width: `${percentage}%`,
-                height: '100%',
-                borderRadius: '9999px'
-              }}
+              className="h-full bg-indigo-600 dark:bg-indigo-500 rounded-full transition-all duration-300"
+              style={{ width: `${percentage}%` }}
             />
           </div>
-          <p className="text-[10px] text-right text-slate-400 font-medium" style={{ textAlign: 'right', margin: 0 }}>
+          <p className="text-[10px] text-right text-slate-400 font-medium m-0">
             {percentage.toFixed(1)}% of total
           </p>
         </div>
@@ -116,16 +84,15 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
-  // Floating Dropdown States
+  // Dropdown & Modal States
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [deleteId, setDeleteId] = useState(null);
 
   const categoryRef = useRef(null);
   const settingsRef = useRef(null);
-
-  // Modals & Notifications
-  const [toast, setToast] = useState(null);
-  const [deleteId, setDeleteId] = useState(null);
+  const toastTimerRef = useRef(null);
 
   // Add Expense Form State
   const [formData, setFormData] = useState({ title: '', amount: '', category: 'Food' });
@@ -149,20 +116,16 @@ export default function Dashboard() {
     }
   });
 
-  const categories = useMemo(
-    () => ['All', 'Food', 'Shopping', 'Travel', 'Bills', 'Education', 'Other'],
-    []
-  );
-
   const showToast = useCallback((message, type = 'success') => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+    toastTimerRef.current = setTimeout(() => setToast(null), 3000);
   }, []);
 
   const fetchExpenses = useCallback(async (activeToken) => {
     const tokenToUse = activeToken || localStorage.getItem('token');
     if (!tokenToUse) return;
-    
+
     setLoading(true);
     try {
       const res = await axios.get(`${API_BASE_URL}/api/expenses`, {
@@ -181,6 +144,7 @@ export default function Dashboard() {
     }
   }, [navigate, showToast]);
 
+  // Auth & Account Sync Effect
   useEffect(() => {
     const currentToken = localStorage.getItem('token');
     if (!currentToken) {
@@ -191,19 +155,14 @@ export default function Dashboard() {
     if (currentUser?.email) {
       setSavedAccounts((prev) => {
         const exists = prev.some((acc) => acc.email === currentUser.email);
-        let updated;
-        if (exists) {
-          updated = prev.map((acc) =>
-            acc.email === currentUser.email
-              ? { ...acc, name: currentUser.name || 'User', token: currentToken }
-              : acc
-          );
-        } else {
-          updated = [
-            ...prev,
-            { name: currentUser.name || 'User', email: currentUser.email, token: currentToken },
-          ];
-        }
+        const updated = exists
+          ? prev.map((acc) =>
+              acc.email === currentUser.email
+                ? { ...acc, name: currentUser.name || 'User', token: currentToken }
+                : acc
+            )
+          : [...prev, { name: currentUser.name || 'User', email: currentUser.email, token: currentToken }];
+
         localStorage.setItem('saved_accounts', JSON.stringify(updated));
         return updated;
       });
@@ -212,19 +171,21 @@ export default function Dashboard() {
     fetchExpenses(currentToken);
   }, [currentUser, navigate, fetchExpenses]);
 
+  // Handle Outside Clicks
   useEffect(() => {
-    function handleClickOutside(event) {
+    const handleClickOutside = (event) => {
       if (categoryRef.current && !categoryRef.current.contains(event.target)) {
         setIsCategoryOpen(false);
       }
       if (settingsRef.current && !settingsRef.current.contains(event.target)) {
         setIsSettingsOpen(false);
       }
-    }
+    };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Handle Dark Mode Class Toggle
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -235,12 +196,17 @@ export default function Dashboard() {
     }
   }, [darkMode]);
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleAddExpense = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem('token');
     if (!formData.title || !formData.amount || !token) return;
-    setSubmitting(true);
 
+    setSubmitting(true);
     try {
       await axios.post(
         `${API_BASE_URL}/api/expenses`,
@@ -266,6 +232,7 @@ export default function Dashboard() {
   const handleDelete = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!deleteId || !token) return;
+
     try {
       await axios.delete(`${API_BASE_URL}/api/expenses/${deleteId}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -278,9 +245,7 @@ export default function Dashboard() {
     }
   }, [deleteId, showToast, fetchExpenses]);
 
-  const handleSetDeleteId = useCallback((id) => {
-    setDeleteId(id);
-  }, []);
+  const handleSetDeleteId = useCallback((id) => setDeleteId(id), []);
 
   const handleSwitchAccount = useCallback((acc) => {
     if (!acc || !acc.token) return;
@@ -304,7 +269,12 @@ export default function Dashboard() {
 
   const handleLogout = () => {
     localStorage.clear();
-    window.location.href = "/login"; 
+    window.location.href = '/login';
+  };
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('All');
   };
 
   const filteredExpenses = useMemo(() => {
@@ -356,18 +326,8 @@ export default function Dashboard() {
             <div className="relative" ref={settingsRef}>
               <button
                 type="button"
-                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 w-8 h-8 flex items-center justify-center rounded-xl border-none transition cursor-pointer"
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  border: 'none',
-                  outline: 'none',
-                  background: 'transparent',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
+                onClick={() => setIsSettingsOpen((prev) => !prev)}
+                className="w-8 h-8 flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl border-none outline-none transition cursor-pointer"
                 aria-label="Settings Menu"
               >
                 ⋮
@@ -400,8 +360,7 @@ export default function Dashboard() {
                                 e.stopPropagation();
                                 handleSwitchAccount(acc);
                               }}
-                              className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between cursor-pointer transition"
-                              style={{ background: 'none', border: 'none', outline: 'none' }}
+                              className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between cursor-pointer transition border-none outline-none bg-transparent"
                             >
                               <span className="truncate">{acc.name}</span>
                               <span className="text-[10px] text-indigo-500 font-bold shrink-0 ml-2">
@@ -416,17 +375,15 @@ export default function Dashboard() {
                   <button
                     type="button"
                     onClick={handleAddAccount}
-                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 flex items-center gap-2 cursor-pointer transition"
-                    style={{ background: 'none', border: 'none', outline: 'none' }}
+                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 flex items-center gap-2 cursor-pointer transition border-none outline-none bg-transparent"
                   >
                     <span>➕ Add another account</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => setDarkMode(!darkMode)}
-                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between cursor-pointer transition"
-                    style={{ background: 'none', border: 'none', outline: 'none' }}
+                    onClick={() => setDarkMode((prev) => !prev)}
+                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between cursor-pointer transition border-none outline-none bg-transparent"
                   >
                     <span>Appearance</span>
                     <span className="text-xs">{darkMode ? '🌙 Dark' : '☀️ Light'}</span>
@@ -436,8 +393,7 @@ export default function Dashboard() {
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center justify-between cursor-pointer transition rounded-b-xl"
-                      style={{ background: 'none', border: 'none', outline: 'none' }}
+                      className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center justify-between cursor-pointer transition rounded-b-xl border-none outline-none bg-transparent"
                     >
                       <span>Logout Account</span>
                       <span>🚪</span>
@@ -458,10 +414,11 @@ export default function Dashboard() {
                 <label className="text-[11px] font-semibold text-slate-400 uppercase">Title</label>
                 <input
                   type="text"
+                  name="title"
                   placeholder="e.g. Grocery"
                   required
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={handleInputChange}
                   className="w-full mt-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
@@ -472,10 +429,11 @@ export default function Dashboard() {
                 </label>
                 <input
                   type="number"
+                  name="amount"
                   placeholder="e.g. 500"
                   required
                   value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  onChange={handleInputChange}
                   className="w-full mt-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
@@ -485,17 +443,16 @@ export default function Dashboard() {
                   Category
                 </label>
                 <select
+                  name="category"
                   value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  onChange={handleInputChange}
                   className="w-full mt-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 >
-                  {categories
-                    .filter((c) => c !== 'All')
-                    .map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
+                  {CATEGORIES.filter((c) => c !== 'All').map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -533,7 +490,7 @@ export default function Dashboard() {
                 Filter Category
               </label>
               <div
-                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                onClick={() => setIsCategoryOpen((prev) => !prev)}
                 className="w-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between cursor-pointer border border-transparent hover:border-slate-300 dark:hover:border-slate-700 transition"
               >
                 <span>
@@ -546,7 +503,7 @@ export default function Dashboard() {
 
               {isCategoryOpen && (
                 <div className="absolute left-0 right-0 mt-2 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl py-1 z-30 max-h-56 overflow-y-auto">
-                  {categories.map((cat) => (
+                  {CATEGORIES.map((cat) => (
                     <div
                       key={cat}
                       onClick={() => {
@@ -578,29 +535,15 @@ export default function Dashboard() {
 
         {/* Expense Log Header Section */}
         <div className="space-y-4">
-          <div className="flex justify-between items-center px-1" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 className="font-bold text-slate-900 dark:text-white text-base" style={{ margin: 0 }}>
+          <div className="flex justify-between items-center px-1">
+            <h3 className="font-bold text-slate-900 dark:text-white text-base m-0">
               Expense Log ({filteredExpenses.length})
             </h3>
             {(searchQuery || selectedCategory !== 'All') && (
               <button
                 type="button"
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedCategory('All');
-                }}
-                className="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold text-xs cursor-pointer"
-                style={{
-                  background: 'none',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  boxShadow: 'none',
-                  padding: 0,
-                  margin: 0,
-                  width: 'auto',
-                  display: 'inline-block'
-                }}
+                onClick={handleResetFilters}
+                className="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold text-xs cursor-pointer bg-transparent border-none outline-none shadow-none p-0 m-0 w-auto inline-block"
               >
                 Reset Filters
               </button>
